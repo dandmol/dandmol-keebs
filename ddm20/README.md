@@ -1,4 +1,4 @@
-# ddm5x4 – Numpad 5×4 con RP2040-Zero
+# ddm20 – Numpad 5×4 con RP2040-Zero
 
 ![ddm5x4](imgur.com image replace me!)
 
