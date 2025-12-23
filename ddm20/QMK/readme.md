@@ -1,12 +1,12 @@
-# ddm5x4 – Numpad 5×4 con RP2040-Zero
+# ddm20 – Numpad 5×4 con RP2040-Zero
 
 ![ddm5x4](imgur.com image replace me!)
 
-`ddm5x4` es un numpad / macropad ortolineal de 5 filas × 4 columnas, basado en un **RP2040-Zero**, cableado a mano (handwired) y pensado para usarse como keypad numérico principal con una segunda capa de navegación y multimedia.
+`ddm20` es un numpad / macropad ortolineal de 5 filas × 4 columnas, basado en un **RP2040-Zero**, cableado a mano (*handwired*) y pensado para usarse como keypad numérico principal con una segunda capa de navegación y multimedia.
 
 El repositorio incluye:
 
-- Configuración completa para **QMK** (`keyboard.json`, `keymap.c`, `rules.mk`).
+- Configuración completa para **QMK** (`keyboard.json`, `keymap.c`, `config.h`, `rules.mk`).
 - Diseño de **carcasa imprimible en 3D** en la carpeta `case/`.
 - Esquema de cableado (filas, columnas, diodos) y materiales utilizados.
 
@@ -20,6 +20,7 @@ El repositorio incluye:
 - **Switches**: Outemu **Tactile Maple Leaf**, 3 pines (en mi montaje he usado 16 unidades).
 - **Diodos**: 1N4148 DO-35, **uno por tecla**.
 - **Cableado**: cable de silicona **24 AWG** para filas y columnas.
+- **Tornillería**: tornillos **M3 × 16 mm** para cerrar la caja.
 - **Tipo de escaneado**:
   - `diode_direction`: `ROW2COL`
   - Filas y columnas definidas en `keyboard.json`.
@@ -68,8 +69,11 @@ En la carpeta `case/` se incluyen los ficheros STL para imprimir la carcasa y la
 El diseño base está tomado de:
 
 **4x5 Macro Pad v3 (nice!nano version)** – MakerWorld
-y adaptado para montar el RP2040-Zero y el cableado handwired de este proyecto.
+
+y adaptado para montar el RP2040-Zero y el cableado handwired de este proyecto:
+
 https://makerworld.com/en/models/1730477-4x5-macro-pad-v3-nice-nano-version
+
 ---
 
 ## Configuración de QMK
@@ -105,15 +109,36 @@ BOARD = GENERIC_RP_RP2040
 # Para sacar consola de depuración (muy útil para ver matriz)
 CONSOLE_ENABLE = yes
 COMMAND_ENABLE = yes
+
+# Habilitar combos (para el combo de bootloader)
+COMBO_ENABLE = yes
 ```
 
 - `BOARD = GENERIC_RP_RP2040` fuerza el uso del board genérico de RP2040.
 - `CONSOLE_ENABLE = yes` permite usar `qmk console` para ver la matriz y mensajes de debug.
 - `COMMAND_ENABLE = yes` habilita comandos especiales de QMK (Magic/Command).
+- `COMBO_ENABLE = yes` activa el soporte de combos (usados para entrar en bootloader con varias teclas).
+
+### config.h
+
+Fragmento relevante para combos:
+
+```c
+#ifdef COMBO_ENABLE
+#    define COMBO_TERM 100    // Ventana de tiempo (ms) para detectar el combo
+#endif
+```
 
 ---
 
 ## Keymap
+
+En `keymap.c` se define, entre otras cosas:
+
+```c
+// Mute global del micro en Windows 11: Win + Alt + K
+#define KC_WIN_MIC_MUTE LAG(KC_K)
+```
 
 ### Capa 0 – Numpad (por defecto)
 
@@ -131,28 +156,70 @@ COMMAND_ENABLE = yes
 
 - `TG(1)`: activa/desactiva la capa 1.
 - `KC_CALC`: abre la calculadora de Windows.
-- Números y operaciones del keypad estándar.
-- `S(KC_0)`: envía Shift + 0, que en distribución española escribe `=`.
+- Números y operaciones estándar de un keypad numérico.
+- `S(KC_0)`: envía Shift + 0, que en distribución española escribe `=` (así se consigue la tecla =).
 
 ### Capa 1 – Multimedia y navegación
 
+Versión final de la distribución:
+
 ```c
 [1] = LAYOUT_ortho_5x4(
-    TG(1),   KC_VOLD,        KC_VOLU,        KC_MUTE,
-    KC_HOME, KC_PGUP,        KC_BRID,        KC_BRIU,
-    KC_END,  KC_PGDN,        XXXXXXX,        KC_MPLY,
-    XXXXXXX, KC_UP,          XXXXXXX,        QK_BOOT,
-    KC_LEFT, KC_DOWN,        KC_RGHT,        KC_ENT
+    TG(1),           KC_HOME,        KC_PGUP,        KC_VOLD,
+    KC_WIN_MIC_MUTE, KC_END,         KC_PGDN,        KC_VOLU,
+    XXXXXXX,         KC_BRID,        KC_BRIU,        KC_MUTE,
+    KC_MPRV,         KC_UP,          KC_MNXT,        KC_MPLY,
+    KC_LEFT,         KC_DOWN,        KC_RGHT,        KC_ENT
 )
 ```
 
-**Funciones**:
+**Resumen de funciones**:
 
-- **Control de volumen**: `KC_VOLD`, `KC_VOLU`, `KC_MUTE`.
-- **Navegación**: `KC_HOME`, `KC_END`, `KC_PGUP`, `KC_PGDN`, cursores.
-- **Brillo pantalla** (en sistemas que lo soporten): `KC_BRID`, `KC_BRIU`.
-- `KC_MPLY`: Play/Pause multimedia.
-- `QK_BOOT`: entra en bootloader desde el propio teclado (esquina inferior derecha de la capa 1).
+**Fila 0**:
+- `TG(1)`: alterna la capa 1.
+- `KC_HOME`, `KC_PGUP`, `KC_VOLD`: inicio de línea, página arriba, volumen abajo.
+
+**Fila 1**:
+- `KC_WIN_MIC_MUTE`: mute global de micro en Windows 11 (Win + Alt + K).
+- `KC_END`, `KC_PGDN`, `KC_VOLU`: fin de línea, página abajo, volumen arriba.
+
+**Fila 2**:
+- `KC_BRID`, `KC_BRIU`: brillo abajo/arriba (en sistemas que soporten estos keycodes).
+- `KC_MUTE`: mute general.
+
+**Fila 3**:
+- `KC_MPRV`, `KC_MNXT`, `KC_MPLY`: pista anterior, siguiente y Play/Pause (Spotify, YouTube, etc. vía teclas multimedia del sistema).
+- `KC_UP`: cursor arriba.
+
+**Fila 4**:
+- `KC_LEFT`, `KC_DOWN`, `KC_RGHT`, `KC_ENT`: cursores y Enter en la misma posición que en la capa numérica.
+
+---
+
+## Combo para entrar en bootloader
+
+Además de las formas habituales de entrar en bootloader del RP2040-Zero, este teclado define un combo en la capa 0:
+
+**Pulsar a la vez**: `5` + `7` + `*` del keypad numérico  
+→ envía `QK_BOOT` y el teclado entra en modo bootloader.
+
+**Implementación en `keymap.c`**:
+
+```c
+// Identificadores de combos
+enum custom_combos {
+    BOOT_COMBO,
+};
+
+// Combo para entrar en bootloader: pulsar 5 + 7 + * (KC_P5, KC_P7, KC_PAST)
+const uint16_t PROGMEM boot_combo[] = { KC_P5, KC_P7, KC_PAST, COMBO_END };
+
+combo_t key_combos[] = {
+    [BOOT_COMBO] = COMBO(boot_combo, QK_BOOT),
+};
+```
+
+El comportamiento del combo está controlado por `COMBO_TERM` en `config.h` (100 ms por defecto).
 
 ---
 
@@ -178,12 +245,12 @@ Esto evita tener que pulsar Num Lock manualmente al conectar el numpad en portá
 
 ## Compilación y flasheo
 
-### Compilar con qmk (recomendado)
+### Compilar con QMK (recomendado)
 
 Desde la raíz de `qmk_firmware`:
 
 ```bash
-qmk compile -kb ddm5x4 -km default
+qmk compile -kb ddm20 -km default
 ```
 
 Esto genera un `.uf2` en la carpeta `.build/`.
@@ -193,7 +260,7 @@ Esto genera un `.uf2` en la carpeta `.build/`.
 1. Mantener pulsado el botón **BOOT** del RP2040-Zero mientras se conecta al USB.
 2. Aparece una unidad de almacenamiento tipo `RPI-RP2` / similar.
 3. Copiar el fichero `.uf2` generado a esa unidad.
-4. El dispositivo se reinicia automático con el nuevo firmware.
+4. El dispositivo se reinicia automáticamente con el nuevo firmware.
 
 ---
 
@@ -239,11 +306,15 @@ Es sencillo modificar `keymap.c` para:
 
 **Keyboard Maintainer**: Daniel Durán ([@dandmol](https://github.com/dandmol))
 
+---
+
 ## Licencia
 
-- El firmware y la configuración de QMK (`keyboard.json`, `keymap.c`, `rules.mk`, etc.) son un derivado de QMK y se distribuyen bajo licencia **GPL-2.0-or-later**.
-- La documentación de este repositorio (README, texto explicativo, etc.) y las fotos del montaje se publican bajo licencia **Creative Commons Atribución 4.0 (CC BY 4.0)**, salvo que se indique lo contrario.
-- Los modelos 3D de la carpeta `case/` son una adaptación del modelo **“4x5 Macro Pad v3 (nice!nano version)”** publicado en MakerWorld bajo licencia **Creative Commons Atribución–No Comercial (CC BY-NC)**.  
-  Esta adaptación mantiene la misma condición de **uso no comercial**: no se permite el uso comercial de la carcasa ni de sus derivados.
+El firmware y la configuración de QMK (`keyboard.json`, `keymap.c`, `config.h`, `rules.mk`, etc.) son un derivado de QMK y se distribuyen bajo licencia **GPL-2.0-or-later**.
+
+La documentación de este repositorio (README, texto explicativo, etc.) y las fotos del montaje se publican bajo licencia **Creative Commons Atribución 4.0 (CC BY 4.0)**, salvo que se indique lo contrario.
+
+Los modelos 3D de la carpeta `case/` son una adaptación del modelo "4x5 Macro Pad v3 (nice!nano version)" publicado en MakerWorld bajo licencia **Creative Commons Atribución–No Comercial (CC BY-NC)**.  
+Esta adaptación mantiene la misma condición de uso no comercial: no se permite el uso comercial de la carcasa ni de sus derivados.
 
 Cualquier modificación, PR o fork para añadir más layouts, variantes de carcasa o mejoras es bienvenida, siempre que respete las licencias anteriores.
