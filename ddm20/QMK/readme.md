@@ -1,6 +1,7 @@
 # ddm20 – Numpad 5×4 con RP2040-Zero
 
-![ddm5x4](imgur.com image replace me!)
+<img width="800" height="800" alt="image" src="https://github.com/user-attachments/assets/dca2135d-e29b-46c3-a18f-bff96e2d2309" />
+
 
 `ddm20` es un numpad / macropad ortolineal de 5 filas × 4 columnas, basado en un **RP2040-Zero**, cableado a mano (*handwired*) y pensado para usarse como keypad numérico principal con una segunda capa de navegación y multimedia.
 
@@ -24,6 +25,7 @@ El repositorio incluye:
 - **Tipo de escaneado**:
   - `diode_direction`: `ROW2COL`
   - Filas y columnas definidas en `keyboard.json`.
+<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/5d69d2a2-8430-4d4c-8aeb-968c5170d782" />
 
 ### Asignación de pines (filas y columnas)
 
