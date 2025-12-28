@@ -20,6 +20,7 @@ El repositorio incluye:
 - **Matriz**: 5 filas × 4 columnas.
 - **Switches**: Outemu **Tactile Maple Leaf**, 3 pines (en mi montaje he usado 16 unidades).
 - **Diodos**: 1N4148 DO-35, **uno por tecla**.
+- **LED indicador de capa**: 1 × LED (3 mm) + resistencia (330 Ω) conectado a `GP1` (se enciende cuando la capa 1 está activa).
 - **Cableado**: cable de silicona **24 AWG** para filas y columnas.
 - **Tornillería**: tornillos **M3 × 16 mm** para cerrar la caja.
 - **Tipo de escaneado**:
@@ -123,9 +124,12 @@ COMBO_ENABLE = yes
 
 ### config.h
 
-Fragmento relevante para combos:
+Fragmento relevante para LED y combos:
 
 ```c
+// LED indicador de capa en GP1
+#define LED_LAYER_PIN GP1
+
 #ifdef COMBO_ENABLE
 #    define COMBO_TERM 100    // Ventana de tiempo (ms) para detectar el combo
 #endif
@@ -222,6 +226,47 @@ combo_t key_combos[] = {
 ```
 
 El comportamiento del combo está controlado por `COMBO_TERM` en `config.h` (100 ms por defecto).
+
+---
+
+## Indicador de capa por LED
+
+El teclado incluye un LED conectado a `GP1` definido como:
+
+```c
+#define LED_LAYER_PIN GP1
+```
+
+En `keyboard_post_init_user` se configura el pin como salida y se apaga el LED al inicio:
+
+```c
+void keyboard_post_init_user(void) {
+    debug_enable = true;
+    debug_matrix = true;
+
+    // Configurar el pin del LED de capa como salida y apagarlo
+    setPinOutput(LED_LAYER_PIN);
+    writePin(LED_LAYER_PIN, 0);
+
+    // Forzar Num Lock activo al arrancar
+    if (!host_keyboard_led_state().num_lock) {
+        tap_code(KC_NUM_LOCK);
+    }
+}
+```
+
+Y en `layer_state_set_user` se controla el estado del LED según la capa activa:
+
+```c
+layer_state_t layer_state_set_user(layer_state_t state) {
+    bool layer1_on = layer_state_cmp(state, 1);
+    writePin(LED_LAYER_PIN, layer1_on ? 1 : 0);
+    return state;
+}
+```
+
+- LED **apagado** → solo capa 0 activa.
+- LED **encendido** → capa 1 activa (media / navegación).
 
 ---
 
