@@ -72,8 +72,20 @@ void keyboard_post_init_user(void) {
     debug_enable = true;
     debug_matrix = true;
 
+    // Configurar el pin del LED de capa como salida y apagarlo de inicio
+    setPinOutput(LED_LAYER_PIN);
+    writePin(LED_LAYER_PIN, 0);  // 0 = apagado
+
     // Forzar Num Lock activo al arrancar
     if (!host_keyboard_led_state().num_lock) {
         tap_code(KC_NUM_LOCK);
     }
+}
+
+// Encender LED si la capa 1 está activa (TO(1), TG(1), MO(1), etc.)
+layer_state_t layer_state_set_user(layer_state_t state) {
+    bool layer1_on = layer_state_cmp(state, 1);
+    writePin(LED_LAYER_PIN, layer1_on ? 1 : 0);
+
+    return state;
 }
